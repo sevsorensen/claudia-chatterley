@@ -283,6 +283,25 @@ claudia
 ```
 This triggers first-run setup with the latest defaults.
 
+## Privacy & Security
+
+Claudia Chatterley is designed with privacy as a core principle.
+
+**What Claudia records:** Audio from your microphone, only while you hold the record button (red mic). Claudia does not listen in the background.
+
+**Where your audio goes:** Processed locally on your Mac by Whisper. Audio is held in memory during transcription (~1-3 seconds), then permanently discarded. No audio is saved to disk, transmitted over the network, or retained in any form.
+
+**What Claudia does NOT do:**
+- Does not record continuously or in the background
+- Does not send data to any server (unless you opt into Groq cloud)
+- Does not open any network ports or listen for connections
+- Does not collect telemetry, analytics, or usage data
+- Does not access other applications' content, URLs, or documents
+
+**Permissions:** Claudia requires Microphone access (to hear you) and Accessibility permission (to paste text via Cmd+V). Both require your explicit approval in System Settings. See [SECURITY.md](SECURITY.md) for full details.
+
+**Groq cloud option:** If you choose `--engine groq`, audio is sent to Groq's servers for transcription. This is opt-in only and clearly marked. The default engine is fully local.
+
 ## Roadmap
 
 - [x] **v0.1** — Voice-to-text with floating mic widget
