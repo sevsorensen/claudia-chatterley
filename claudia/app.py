@@ -77,6 +77,15 @@ class ClaudiaApp:
         """
         logger.info("Starting Claudia Chatterley v0.1.0")
 
+        # CRITICAL: Initialize NSApplication FIRST — macOS requires this
+        # before creating any windows or UI elements
+        try:
+            from AppKit import NSApplication
+            NSApplication.sharedApplication()
+            logger.info("NSApplication initialized")
+        except ImportError:
+            logger.warning("AppKit not available — UI may not work")
+
         # Check accessibility permissions
         if not TextInjector.check_accessibility_permission():
             logger.warning(
@@ -99,7 +108,7 @@ class ClaudiaApp:
             name="model-preloader",
         ).start()
 
-        # Create and show the floating widget
+        # Create and show the floating widget (NSApplication must exist first)
         if self.config.ui.show_floating_widget:
             self.widget.show()
             logger.info("Floating mic widget shown at (%d, %d)", self.config.ui.widget_x, self.config.ui.widget_y)

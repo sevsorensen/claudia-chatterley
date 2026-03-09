@@ -278,7 +278,7 @@ if HAS_PYOBJC:
             self.window.setIgnoresMouseEvents_(False)
             self.window.setMovableByWindowBackground_(True)
             self.window.setCollectionBehavior_(
-                1 << 0 | 1 << 1  # canJoinAllSpaces | participatesInCycle
+                1 << 0  # NSWindowCollectionBehaviorCanJoinAllSpaces
             )
 
             # Create the mic view
