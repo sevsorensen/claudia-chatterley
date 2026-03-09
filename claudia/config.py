@@ -27,8 +27,8 @@ class TranscriptionConfig:
     engine: str = "local"
 
     # Whisper model size: "tiny", "base", "small", "medium", "large-v3"
-    # base is the sweet spot: 140MB, fast, decent accuracy
-    model_size: str = "base"
+    # small is the sweet spot: ~460MB, good speed, noticeably better on proper nouns
+    model_size: str = "small"
 
     # Language code (None = auto-detect)
     language: Optional[str] = "en"
