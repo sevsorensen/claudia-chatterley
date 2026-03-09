@@ -8,5 +8,5 @@ anywhere on macOS.
 3-3.5x faster than typing. Zero cognitive load on spelling and grammar.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Severin Sorensen"

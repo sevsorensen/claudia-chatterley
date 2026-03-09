@@ -77,7 +77,7 @@ def first_run_setup(config: ClaudiaConfig):
         print(f"  Found Groq API key in environment. Cloud transcription available.\n")
         config.transcription.groq_api_key = groq_key
 
-    print("  Using local Whisper model (base, ~140MB). Downloading on first transcription...")
+    print(f"  Using local Whisper model ({config.transcription.model_size}). Downloading on first transcription...")
     print("  You can change settings later in ~/.claudia/config.json\n")
 
     # Pre-download the model
@@ -118,7 +118,7 @@ def main():
     )
     parser.add_argument(
         "--model", choices=["tiny", "base", "small", "medium", "large-v3"],
-        default=None, help="Whisper model size (default: base)"
+        default=None, help="Whisper model size (default: small)"
     )
     parser.add_argument(
         "--groq-key", default=None, help="Groq API key for cloud transcription"

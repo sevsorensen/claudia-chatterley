@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "claudia-chatterley"
-version = "0.1.0"
+version = "0.1.1"
 description = "Voice-to-text companion for Claude Cowork and any macOS app. Speak instead of type."
 readme = "README.md"
 license = {text = "MIT"}

@@ -130,7 +130,8 @@ class MenubarApp:
 
     def showAbout_(self, sender):
         """Show about dialog."""
-        logger.info("Claudia Chatterley v0.1.0 — Voice-to-text for Cowork")
+        from claudia import __version__
+        logger.info("Claudia Chatterley v%s — Voice-to-text for Cowork", __version__)
 
     def quitApp_(self, sender):
         """Quit the application."""

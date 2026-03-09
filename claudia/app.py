@@ -82,7 +82,8 @@ class ClaudiaApp:
         Starts the menubar app on the main thread (required by macOS)
         and creates the floating widget.
         """
-        logger.info("Starting Claudia Chatterley v0.1.0")
+        from claudia import __version__
+        logger.info("Starting Claudia Chatterley v%s", __version__)
 
         # CRITICAL: Initialize NSApplication FIRST — macOS requires this
         # before creating any windows or UI elements
