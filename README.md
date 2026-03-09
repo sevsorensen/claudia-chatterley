@@ -35,13 +35,16 @@ Click 🎤 → Speak → Click 🎤 → Text appears → Edit if needed → Pres
            │
            ▼
 ┌──────────────────────────────┐
-│  Whisper (local, private)    │
-│  ~140MB model, Apple Silicon │
+│  Whisper "small" (local)     │
+│  ~460MB model, Apple Silicon │
+│  + vocabulary hints for      │
+│    your proper nouns         │
 └──────────┬───────────────────┘
            │
            ▼
 ┌──────────────────────────────┐
-│  Paste into active window    │
+│  Focus restored to your app  │
+│  Text pasted automatically   │
 │  Works everywhere on macOS   │
 └──────────────────────────────┘
 ```
@@ -50,16 +53,18 @@ Click 🎤 → Speak → Click 🎤 → Text appears → Edit if needed → Pres
 
 ### Recommended: One-Command Install
 
-This handles everything — Homebrew, Python, portaudio, and Claudia itself. It will ask before installing each piece.
+This handles everything — Homebrew, Python 3.12, portaudio, pipx, and Claudia itself. It asks before installing each piece.
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/sevsorensen/claudia-chatterley/main/setup.sh)"
 ```
 
+> **Why this format?** The `/bin/bash -c "$(curl ...)"` pattern downloads the script as a string *first*, then runs it. This keeps your keyboard input working so the installer can ask you yes/no questions. (This is the same pattern Homebrew's own installer uses.)
+
 ### From Source (developers)
 
 ```bash
-git clone https://github.com/severinsorensen/claudia-chatterley.git
+git clone https://github.com/sevsorensen/claudia-chatterley.git
 cd claudia-chatterley
 chmod +x setup.sh && ./setup.sh
 ```
@@ -67,22 +72,47 @@ chmod +x setup.sh && ./setup.sh
 ### Manual Install (if you already have Python 3.10+ and Homebrew)
 
 ```bash
-brew install portaudio
-pip3 install claudia-chatterley
+brew install portaudio pipx
+pipx install git+https://github.com/sevsorensen/claudia-chatterley.git
 claudia
 ```
 
-On first run, Claudia downloads the Whisper base model (~140MB). After that, everything runs locally.
+> **Note:** Claudia is installed via `pipx` (not `pip`) because Homebrew's Python 3.12 uses PEP 668 "externally managed environments" that block system-wide pip installs. pipx creates an isolated virtual environment automatically.
+
+On first run, Claudia downloads the Whisper "small" model (~460MB). After that, everything runs locally.
+
+## What the Installer Actually Does
+
+We tested the installer on a stock MacBook Pro with only Python 3.9 and no Homebrew. Here's exactly what it checks and installs:
+
+| Step | What It Checks | If Missing… |
+|------|---------------|-------------|
+| 1 | Homebrew | Installs it (requires your Mac password, takes 2–5 min) |
+| 2 | Python 3.10+ | Installs Python 3.12 via Homebrew (your old 3.9 stays untouched) |
+| 3 | portaudio | Installs via Homebrew (a few seconds) |
+| 4 | pipx | Installs via Homebrew (the safe way to install Python CLI apps) |
+| 5 | Claudia | Installs from GitHub via pipx into its own virtual environment |
+
+**After Homebrew installs:** If you see "command not found: brew", close Terminal completely (Cmd+Q) and open a new window. Homebrew needs a fresh shell to be recognized.
 
 ## Requirements
 
-The setup script installs these automatically, but for reference:
-
 - **macOS** (Apple Silicon recommended for fastest transcription)
 - **Homebrew** — free package manager for macOS ([brew.sh](https://brew.sh))
-- **Python 3.10+** — the system Python on most Macs is 3.9; the installer adds 3.12 via Homebrew without touching your system Python
-- **portaudio** — audio library for microphone access (installed via `brew install portaudio`)
-- **Accessibility permission** — System Settings > Privacy & Security > Accessibility (required for auto-paste)
+- **Python 3.10+** — your Mac probably has 3.9; the installer adds 3.12 alongside it
+- **portaudio** — audio library for microphone access
+- **Accessibility permission** — System Settings > Privacy & Security > Accessibility (required for auto-paste into other apps)
+
+## Accessibility Permission (Important!)
+
+Claudia needs Accessibility permission to simulate Cmd+V and paste text into other apps. Without it, transcription works but the text only goes to your clipboard — it won't auto-paste.
+
+1. Open **System Settings** → **Privacy & Security** → **Accessibility**
+2. Click the **+** button
+3. Add **Terminal** (or whatever terminal app you use to launch `claudia`)
+4. Make sure the toggle is **ON** (blue)
+
+**How you'll know it's missing:** Claudia will transcribe your speech (you'll see it in the terminal log) but the text won't appear in your target app. The terminal will say "Auto-paste failed."
 
 ## Usage
 
@@ -98,8 +128,9 @@ claudia --no-widget        # Menubar only (no floating button)
 ### Transcription Options
 
 ```bash
-claudia --model small      # Use a larger model (more accurate, slower)
-claudia --model tiny       # Use a smaller model (faster, less accurate)
+claudia --model small      # Default — good accuracy, good speed
+claudia --model base       # Faster, less accurate
+claudia --model medium     # Slower, more accurate
 claudia --language auto    # Auto-detect language
 claudia --language es      # Transcribe in Spanish
 ```
@@ -115,6 +146,33 @@ claudia --engine groq
 
 Groq transcribes at 216× real-time — essentially instant. Get a free API key at [console.groq.com](https://console.groq.com).
 
+> **Privacy note:** When using Groq, your audio is sent to their servers. If you do sensitive work and want everything local, stick with the default `local` engine.
+
+## Vocabulary Hints (Teach Claudia Your Words)
+
+Whisper sometimes misspells proper nouns it hasn't seen before. Claudia lets you seed a vocabulary list so the model expects your specific words.
+
+Default vocabulary (ships with Claudia):
+```
+Severin, Sorensen, ePraxis, Arete, AreteCoach, AIWhisperer, Claudia Chatterley, Cowork, Vistage
+```
+
+**To add your own words:** Edit `~/.claudia/config.json` and add to the `"vocabulary"` array:
+
+```json
+{
+  "transcription": {
+    "vocabulary": [
+      "Severin", "Sorensen", "ePraxis", "Arete", "AreteCoach",
+      "AIWhisperer", "Claudia Chatterley", "Cowork", "Vistage",
+      "YourCompany", "YourProduct", "AnyProperNoun"
+    ]
+  }
+}
+```
+
+No reinstall needed — just restart `claudia`.
+
 ## Configuration
 
 Settings are stored in `~/.claudia/config.json`:
@@ -123,8 +181,9 @@ Settings are stored in `~/.claudia/config.json`:
 {
   "transcription": {
     "engine": "local",
-    "model_size": "base",
+    "model_size": "small",
     "language": "en",
+    "vocabulary": ["Severin", "Sorensen", "ePraxis", "..."],
     "groq_api_key": null
   },
   "audio": {
@@ -156,8 +215,8 @@ Environment variables override config file settings:
 | Model | Size | Speed | Accuracy | Best For |
 |-------|------|-------|----------|----------|
 | tiny | 39MB | Fastest | Basic | Quick notes, simple dictation |
-| **base** | **140MB** | **Fast** | **Good** | **Default — best balance** |
-| small | 461MB | Moderate | Better | Important documents |
+| base | 140MB | Fast | Good | Fast drafts where speed matters most |
+| **small** | **461MB** | **Moderate** | **Better** | **Default — best balance of speed and accuracy** |
 | medium | 1.5GB | Slower | Great | Professional transcription |
 | large-v3 | 3GB | Slowest | Best | Maximum accuracy |
 
@@ -169,29 +228,65 @@ Environment variables override config file settings:
 | Works system-wide | ✅ | ❌ (Chrome only) | ✅ |
 | Fully local/private | ✅ | ❌ (cloud) | ✅ (on Apple Silicon) |
 | Click-to-toggle mic | ✅ | ✅ | ❌ (keyboard shortcut) |
-| Whisper accuracy | ✅ | N/A | Comparable |
+| Custom vocabulary | ✅ | N/A | ❌ |
 | Open source | ✅ | ❌ | ❌ |
 | Cloud option | ✅ (Groq) | Built-in | ❌ |
 
 ## Troubleshooting
 
-### "Auto-paste failed"
-Claudia needs Accessibility permission. Go to System Settings > Privacy & Security > Accessibility and add Terminal (or your Python environment) to the allowed list.
+These are real problems we hit during installation and testing, with real fixes.
+
+### "command not found: brew" after Homebrew installs
+Close Terminal completely (Cmd+Q) and open a new window. Homebrew adds itself to your PATH, but only in new shell sessions. Then re-run the install command.
+
+### "externally-managed-environment" error from pip
+Homebrew's Python 3.12 blocks system-wide pip installs (PEP 668). This is by design. Use `pipx` instead, which creates an isolated environment:
+```bash
+brew install pipx
+pipx install git+https://github.com/sevsorensen/claudia-chatterley.git
+```
+
+### "Auto-paste failed" or text goes to Terminal instead of your app
+Two things to check:
+1. **Accessibility permission** — System Settings > Privacy & Security > Accessibility. Add Terminal and toggle it ON.
+2. **Focus tracking** — Claudia remembers which app you were in *before* clicking the mic and returns focus there after transcription. Make sure you click into your target app (Chrome, Cowork, etc.) before clicking the mic.
+
+### Whisper misspells your name or company
+Add your proper nouns to the vocabulary list in `~/.claudia/config.json` (see "Vocabulary Hints" section above). Restart `claudia` to pick up the changes.
 
 ### "No input devices found"
 Install portaudio: `brew install portaudio`
 
 ### Transcription is slow
-- Use the `tiny` or `base` model for speed
+- The `small` model (default) takes 1–3 seconds on Apple Silicon for a 10-second clip
+- Use `base` or `tiny` for faster results: `claudia --model base`
 - Or switch to Groq cloud: `claudia --engine groq`
 - Apple Silicon Macs are significantly faster than Intel
 
-### Text appears in wrong window
-Claudia pastes into whatever window has focus when transcription finishes. Make sure your target window (Cowork, etc.) is focused before clicking the mic.
+### "Python 3.10+ required" (found 3.9)
+Your Mac has the old system Python. Install a newer one alongside it:
+```bash
+brew install python@3.12
+```
+This does NOT replace your old Python — it adds a new one. Then reinstall Claudia.
+
+### Updating Claudia
+To get the latest version from GitHub:
+```bash
+pipx install --force git+https://github.com/sevsorensen/claudia-chatterley.git
+```
+
+If you changed the default model size or other settings, and the old `config.json` is overriding your new defaults:
+```bash
+rm ~/.claudia/config.json
+claudia
+```
+This triggers first-run setup with the latest defaults.
 
 ## Roadmap
 
 - [x] **v0.1** — Voice-to-text with floating mic widget
+- [x] **v0.1.1** — Focus tracking, vocabulary hints, "small" model default
 - [ ] **v0.2** — Global hotkey support (Cmd+Shift+Space)
 - [ ] **v0.3** — Cowork plugin integration (MCP server)
 - [ ] **v0.4** — Two-way voice conversation ("Claudia Chatterley Mode")
