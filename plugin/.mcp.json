@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "claudia-voice": {
+      "type": "http",
+      "url": "http://localhost:18024/mcp",
+      "headers": {
+        "X-Claudia-Version": "0.1.0"
+      }
+    }
+  }
+}

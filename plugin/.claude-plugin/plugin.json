@@ -1,0 +1,10 @@
+{
+  "name": "claudia-chatterley",
+  "version": "0.1.0",
+  "description": "Voice-to-text and two-way voice conversation for Claude Cowork. Speak instead of type.",
+  "author": "Severin Sorensen <sev@epraxis.com>",
+  "homepage": "https://github.com/severinsorensen/claudia-chatterley",
+  "license": "MIT",
+  "keywords": ["voice", "speech", "audio", "dictation", "transcription", "tts"],
+  "category": "productivity"
+}
