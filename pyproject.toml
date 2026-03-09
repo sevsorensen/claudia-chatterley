@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "claudia-chatterley"
@@ -50,9 +50,9 @@ dev = [
 claudia = "claudia.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/severinsorensen/claudia-chatterley"
-Repository = "https://github.com/severinsorensen/claudia-chatterley"
-Issues = "https://github.com/severinsorensen/claudia-chatterley/issues"
+Homepage = "https://github.com/sevsorensen/claudia-chatterley"
+Repository = "https://github.com/sevsorensen/claudia-chatterley"
+Issues = "https://github.com/sevsorensen/claudia-chatterley/issues"
 
 [tool.setuptools.packages.find]
 include = ["claudia*"]

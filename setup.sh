@@ -155,14 +155,21 @@ fi
 # ────────────────────────────────────────────
 # Step 3b: pipx (for safe CLI app installation)
 # ────────────────────────────────────────────
-if ! command -v pipx &> /dev/null; then
+PIPX_CMD=""
+if command -v pipx &> /dev/null; then
+    PIPX_CMD="pipx"
+    echo -e "  ✓ pipx found"
+elif [[ -f "$(brew --prefix)/bin/pipx" ]]; then
+    PIPX_CMD="$(brew --prefix)/bin/pipx"
+    echo -e "  ✓ pipx found"
+else
     echo ""
     echo -e "${BLUE}Installing pipx (manages Python CLI tools safely)...${RESET}"
     brew install pipx
-    pipx ensurepath 2>/dev/null || true
+    # Use full path since PATH may not be updated in this session
+    PIPX_CMD="$(brew --prefix)/bin/pipx"
+    $PIPX_CMD ensurepath 2>/dev/null || true
     echo -e "  ✓ pipx installed"
-else
-    echo -e "  ✓ pipx found"
 fi
 
 # ────────────────────────────────────────────
@@ -175,10 +182,10 @@ GITHUB_REPO="git+https://github.com/sevsorensen/claudia-chatterley.git"
 
 if [[ -d "claudia" ]] && [[ -f "pyproject.toml" ]]; then
     # Local install (running from inside the cloned repo)
-    pipx install -e . 2>/dev/null || $PIP_CMD install -e . --user --break-system-packages
+    $PIPX_CMD install -e . --python $PYTHON_CMD || $PIP_CMD install -e . --user --break-system-packages
 else
     # Install from GitHub
-    pipx install "$GITHUB_REPO" 2>/dev/null || $PIP_CMD install "$GITHUB_REPO" --user --break-system-packages
+    $PIPX_CMD install "$GITHUB_REPO" --python $PYTHON_CMD || $PIP_CMD install "$GITHUB_REPO" --user --break-system-packages
 fi
 
 # ────────────────────────────────────────────
