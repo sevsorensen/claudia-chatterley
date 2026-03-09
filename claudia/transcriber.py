@@ -109,7 +109,7 @@ class Transcriber:
             segment_count = 0
             for segment in segments:
                 text_parts.append(segment.text.strip())
-                total_confidence += segment.avg_log_prob
+                total_confidence += segment.avg_logprob
                 segment_count += 1
 
             text = " ".join(text_parts).strip()
