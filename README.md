@@ -53,7 +53,7 @@ Click 🎤 → Speak → Click 🎤 → Text appears → Edit if needed → Pres
 This handles everything — Homebrew, Python, portaudio, and Claudia itself. It will ask before installing each piece.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/severinsorensen/claudia-chatterley/main/setup.sh | bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/sevsorensen/claudia-chatterley/main/setup.sh)"
 ```
 
 ### From Source (developers)

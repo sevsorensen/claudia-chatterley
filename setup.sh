@@ -9,7 +9,7 @@
 #   4. Installs Claudia Chatterley
 #
 # Usage (from the Internet):
-#   curl -sSL https://raw.githubusercontent.com/severinsorensen/claudia-chatterley/main/setup.sh | bash
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/sevsorensen/claudia-chatterley/main/setup.sh)"
 #
 # Usage (local, after cloning the repo):
 #   chmod +x setup.sh && ./setup.sh
