@@ -9,7 +9,7 @@ import json
 import os
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 
 # Default paths
@@ -41,6 +41,14 @@ class TranscriptionConfig:
 
     # Voice activity detection: minimum silence duration (seconds) to consider speech done
     vad_silence_duration: float = 1.0
+
+    # Vocabulary hints — proper nouns and domain-specific words that Whisper
+    # should recognize. These are passed as an "initial prompt" that primes
+    # the model to expect these words. Edit in ~/.claudia/config.json.
+    vocabulary: List[str] = field(default_factory=lambda: [
+        "Severin", "Sorensen", "ePraxis", "Arete", "AreteCoach",
+        "AIWhisperer", "Claudia Chatterley", "Cowork", "Vistage",
+    ])
 
 
 @dataclass

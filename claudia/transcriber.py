@@ -93,10 +93,18 @@ class Transcriber:
             tmp_path = tmp.name
 
         try:
+            # Build initial prompt from vocabulary hints to prime Whisper
+            # on proper nouns and domain-specific words
+            initial_prompt = None
+            if self.config.vocabulary:
+                initial_prompt = ", ".join(self.config.vocabulary)
+                logger.debug("Vocabulary prompt: %s", initial_prompt)
+
             segments, info = model.transcribe(
                 tmp_path,
                 language=self.config.language,
                 beam_size=self.config.beam_size,
+                initial_prompt=initial_prompt,
                 vad_filter=True,
                 vad_parameters=dict(
                     min_silence_duration_ms=int(self.config.vad_silence_duration * 1000),
