@@ -27,11 +27,11 @@ class ClaudiaApp:
     Main Claudia Chatterley application.
 
     Manages the voice-to-text pipeline:
-    1. User clicks mic widget → starts recording
+    1. User clicks mic widget → starts recording (saves frontmost app)
     2. User clicks again → stops recording
     3. Audio is transcribed by Whisper
-    4. Transcribed text is pasted into the active window
-    5. User reviews, edits if needed, presses Enter
+    4. Focus is returned to the original app
+    5. Transcribed text is pasted into that window
 
     Usage:
         config = ClaudiaConfig.load()
@@ -44,6 +44,7 @@ class ClaudiaApp:
         self._is_recording = False
         self._transcription_count = 0
         self._total_audio_seconds = 0.0
+        self._target_app = None  # The app that had focus before recording
 
         # Initialize components
         self.recorder = AudioRecorder(
@@ -133,8 +134,40 @@ class ClaudiaApp:
         else:
             self._start_recording()
 
+    def _save_target_app(self):
+        """Remember which app had focus before the user clicked the mic."""
+        try:
+            from AppKit import NSWorkspace
+            front = NSWorkspace.sharedWorkspace().frontmostApplication()
+            bundle = front.bundleIdentifier()
+            # Don't save ourselves as the target
+            if bundle and "claudia" not in bundle.lower() and "python" not in bundle.lower():
+                self._target_app = front
+                logger.debug("Target app saved: %s (%s)", front.localizedName(), bundle)
+            else:
+                # If Python/Claudia is frontmost, keep whatever we had before
+                logger.debug("Mic clicked from own process — keeping previous target: %s",
+                             self._target_app.localizedName() if self._target_app else "none")
+        except Exception as e:
+            logger.debug("Could not determine frontmost app: %s", e)
+
+    def _restore_target_app(self):
+        """Bring the target app back to front so paste lands in the right window."""
+        if self._target_app is None:
+            logger.debug("No target app to restore")
+            return
+        try:
+            self._target_app.activateWithOptions_(1 << 1)  # NSApplicationActivateIgnoringOtherApps
+            logger.debug("Restored focus to: %s", self._target_app.localizedName())
+            time.sleep(0.15)  # Brief pause to let the window come to front
+        except Exception as e:
+            logger.warning("Could not restore target app: %s", e)
+
     def _start_recording(self):
         """Begin capturing audio."""
+        # Save which app the user was in BEFORE clicking the mic
+        self._save_target_app()
+
         self._is_recording = True
         self.widget.set_state(WidgetState.RECORDING)
         if self._menubar:
@@ -196,8 +229,8 @@ class ClaudiaApp:
             if self.config.ui.play_chime:
                 play_chime()
 
-            # Brief pause to let the chime play and user focus on target window
-            time.sleep(0.1)
+            # Restore focus to the app the user was in before clicking the mic
+            self._restore_target_app()
 
             # Inject text into active window
             success = self.injector.inject(result.text)
