@@ -47,7 +47,7 @@ if ! command -v brew &> /dev/null; then
     echo "  Homebrew is a free package manager for macOS."
     echo "  Claudia needs it to install audio libraries and Python."
     echo ""
-    read -p "  Install Homebrew now? (y/n) " -n 1 -r
+    read -p "  Install Homebrew now? (y/n) " -n 1 -r < /dev/tty
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo ""
@@ -107,7 +107,7 @@ fi
 
 if [[ "$NEED_PYTHON" == true ]]; then
     echo ""
-    read -p "  Install Python 3.12 via Homebrew? (y/n) " -n 1 -r
+    read -p "  Install Python 3.12 via Homebrew? (y/n) " -n 1 -r < /dev/tty
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${BLUE}Installing Python 3.12...${RESET}"
