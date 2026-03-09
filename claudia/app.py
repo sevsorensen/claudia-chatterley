@@ -39,12 +39,18 @@ class ClaudiaApp:
         app.run()  # Blocks — runs the macOS event loop
     """
 
+    # Bundle IDs that belong to Claudia's own process — never treat these as targets
+    _OWN_BUNDLES = {"org.python.python", "com.apple.terminal", "com.googlecode.iterm2"}
+
     def __init__(self, config: ClaudiaConfig):
         self.config = config
         self._is_recording = False
         self._transcription_count = 0
         self._total_audio_seconds = 0.0
-        self._target_app = None  # The app that had focus before recording
+
+        # Continuous focus tracker: always knows the last non-Claudia app
+        self._last_external_app = None  # NSRunningApplication
+        self._target_app = None         # Frozen at recording start
 
         # Initialize components
         self.recorder = AudioRecorder(
@@ -86,6 +92,9 @@ class ClaudiaApp:
             logger.info("NSApplication initialized")
         except ImportError:
             logger.warning("AppKit not available — UI may not work")
+
+        # Start tracking which app has focus so we always know where to paste
+        self._start_focus_tracker()
 
         # Check accessibility permissions
         if not TextInjector.check_accessibility_permission():
@@ -134,22 +143,57 @@ class ClaudiaApp:
         else:
             self._start_recording()
 
-    def _save_target_app(self):
-        """Remember which app had focus before the user clicked the mic."""
+    def _start_focus_tracker(self):
+        """
+        Register for macOS workspace notifications so we continuously track
+        the last non-Claudia app that had focus. This runs on the main thread's
+        run loop via NSNotificationCenter — no polling needed.
+        """
         try:
-            from AppKit import NSWorkspace
+            from AppKit import NSWorkspace, NSNotificationCenter
+
+            center = NSWorkspace.sharedWorkspace().notificationCenter()
+            center.addObserverForName_object_queue_usingBlock_(
+                "NSWorkspaceDidActivateApplicationNotification",
+                None,  # any object
+                None,  # deliver on posting thread (main run loop)
+                self._on_app_activated,
+            )
+
+            # Seed with whatever is frontmost right now
             front = NSWorkspace.sharedWorkspace().frontmostApplication()
-            bundle = front.bundleIdentifier()
-            # Don't save ourselves as the target
-            if bundle and "claudia" not in bundle.lower() and "python" not in bundle.lower():
-                self._target_app = front
-                logger.debug("Target app saved: %s (%s)", front.localizedName(), bundle)
-            else:
-                # If Python/Claudia is frontmost, keep whatever we had before
-                logger.debug("Mic clicked from own process — keeping previous target: %s",
-                             self._target_app.localizedName() if self._target_app else "none")
+            if front and not self._is_own_process(front):
+                self._last_external_app = front
+
+            logger.info("Focus tracker started — will remember last active app")
         except Exception as e:
-            logger.debug("Could not determine frontmost app: %s", e)
+            logger.warning("Could not start focus tracker: %s", e)
+
+    def _on_app_activated(self, notification):
+        """Called by macOS every time a different app comes to the foreground."""
+        try:
+            app = notification.userInfo()["NSWorkspaceApplicationKey"]
+            if not self._is_own_process(app):
+                self._last_external_app = app
+                logger.debug("Focus tracker: now tracking %s (%s)",
+                             app.localizedName(), app.bundleIdentifier())
+        except Exception as e:
+            logger.debug("Focus tracker notification error: %s", e)
+
+    def _is_own_process(self, app) -> bool:
+        """Return True if the given NSRunningApplication belongs to Claudia."""
+        try:
+            bundle = (app.bundleIdentifier() or "").lower()
+            # Check known bundle IDs for Terminal, Python, iTerm
+            if bundle in self._OWN_BUNDLES:
+                return True
+            # Also check by PID — if the app's PID matches ours, it's us
+            import os
+            if app.processIdentifier() == os.getpid():
+                return True
+            return False
+        except Exception:
+            return False
 
     def _restore_target_app(self):
         """Bring the target app back to front so paste lands in the right window."""
@@ -159,14 +203,18 @@ class ClaudiaApp:
         try:
             self._target_app.activateWithOptions_(1 << 1)  # NSApplicationActivateIgnoringOtherApps
             logger.debug("Restored focus to: %s", self._target_app.localizedName())
-            time.sleep(0.15)  # Brief pause to let the window come to front
+            time.sleep(0.2)  # Let the window come to front before pasting
         except Exception as e:
             logger.warning("Could not restore target app: %s", e)
 
     def _start_recording(self):
         """Begin capturing audio."""
-        # Save which app the user was in BEFORE clicking the mic
-        self._save_target_app()
+        # Freeze the current external app as our paste target
+        self._target_app = self._last_external_app
+        if self._target_app:
+            logger.info("Will paste into: %s", self._target_app.localizedName())
+        else:
+            logger.warning("No target app detected — text will go to clipboard only")
 
         self._is_recording = True
         self.widget.set_state(WidgetState.RECORDING)
