@@ -1,4 +1,4 @@
-# 🎤 Claudia Chatterley
+# 🎤 Claudia Chatterley (Voice-to-Text)
 
 **Voice-to-text companion for Claude Cowork and any macOS app.**
 
